@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: products
+    // Fields: name (string), price (number), status (string), etc.
+    //
+    // Collection: orders
+    // Fields: customerName (string), customerPhone (string), totalAmount (number), status (string), etc.
+    //
+    // Collection: inventory_logs
+    // Fields: productId (string), change (number), reason (string), etc.
+    //
+    // Collection: accounts
+    // Fields: name (string), balance (number), type (string), etc.
+    //
+    // Collection: config
+    // Fields: pixelId (string), gtmId (string), clarityId (string), etc.
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "hossainsolyman534@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // Products: Publicly readable if active, writable only by admin
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Orders: Publicly creatable (for customers), readable/writable by admin
+    match /orders/{orderId} {
+      allow create: if hasRequiredFields(['customerName', 'customerPhone', 'items', 'totalAmount', 'status'])
+                    && request.resource.data.status == 'pending';
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Inventory Logs: Admin only
+    match /inventory_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Accounts: Admin only
+    match /accounts/{accountId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Config: Publicly readable (for tracking), writable only by admin
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users: Admin only
+    match /users/{userId} {
+      allow read, write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+    }
+  }
+}

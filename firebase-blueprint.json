@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A product with landing page configuration, upsells, and cross-sells.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Product name" },
+        "description": { "type": "string", "description": "Product description" },
+        "price": { "type": "number", "description": "Product price" },
+        "comparePrice": { "type": "number", "description": "Original price for discount display" },
+        "images": { "type": "array", "items": { "type": "string" }, "description": "Product images" },
+        "landingPage": {
+          "type": "object",
+          "properties": {
+            "heroTitle": { "type": "string" },
+            "heroSubtitle": { "type": "string" },
+            "features": { "type": "array", "items": { "type": "object" } },
+            "testimonials": { "type": "array", "items": { "type": "object" } },
+            "faq": { "type": "array", "items": { "type": "object" } },
+            "videoUrl": { "type": "string" }
+          }
+        },
+        "upsells": { "type": "array", "items": { "type": "string" }, "description": "IDs of upsell products" },
+        "crossSells": { "type": "array", "items": { "type": "string" }, "description": "IDs of cross-sell products" },
+        "inventoryCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "draft", "out_of_stock"] }
+      },
+      "required": ["name", "price", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details.",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled", "incompatible"] },
+        "courierDetails": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "trackingData": { "type": "object" }
+      },
+      "required": ["customerName", "customerPhone", "items", "totalAmount", "status"]
+    },
+    "InventoryLog": {
+      "title": "Inventory Log",
+      "description": "Log of inventory changes.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "change": { "type": "number" },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Financial accounts for the business.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "balance": { "type": "number" },
+        "type": { "type": "string", "enum": ["bank", "mobile_money", "cash"] }
+      }
+    },
+    "TrackingConfig": {
+      "title": "Tracking Config",
+      "description": "Configuration for Pixel, GTM, and Clarity.",
+      "type": "object",
+      "properties": {
+        "pixelId": { "type": "string" },
+        "gtmId": { "type": "string" },
+        "clarityId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Store products and their landing page configs."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Store customer orders."
+    },
+    "/inventory_logs/{logId}": {
+      "schema": "InventoryLog",
+      "description": "Track inventory movements."
+    },
+    "/accounts/{accountId}": {
+      "schema": "Account",
+      "description": "Manage business accounts."
+    },
+    "/config/tracking": {
+      "schema": "TrackingConfig",
+      "description": "Global tracking configuration."
+    }
+  }
+}
